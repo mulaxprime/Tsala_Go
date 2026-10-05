@@ -41,7 +41,7 @@ cmd({
         // Send reaction explicitly
         await client.sendMessage(from, { react: { text: '🚀', key: message.key } });
 
-        const repoUrl = config.REPO || "https://github.com/mulaxprime/Tsala_Yame";
+        const repoUrl = config.REPO || "https://github.com/mulaxprime/Tsala_Go";
         const repoName = repoUrl.split('/').pop();
         
         await reply(tiny("📥 Downloading updates directly..."));
