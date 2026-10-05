@@ -4,6 +4,7 @@ const { cmd, commands } = require('../command');
 const fs = require('fs');
 const path = require('path');
 const { tiny } = require("../lib/fancy_font/fancy");
+const B = require('../lib/buttons');
 
 // Function to get a random photo safely (supports jpg, jpeg, png, webp)
 function getRandomPhoto() {
@@ -28,9 +29,8 @@ cmd({
     category: "other",
     filename: __filename
 },
-async (conn, mek, m, { from, q, reply }) => {
+async (conn, mek, m, { from, q, reply, sender }) => {
     try {
-        // Send reaction explicitly
         await conn.sendMessage(from, { react: { text: '🌤', key: mek.key } });
 
         if (!q) return reply(tiny("❗ Please provide a city name. Usage: .weather [city name]"));
@@ -43,7 +43,7 @@ async (conn, mek, m, { from, q, reply }) => {
         const data = response.data;
 
         let weatherLayout = 
-            `╭───〔 🌸 *Tsala Weather* 🌸 〕───⬣
+`╭───〔 🌸 *Tsala Weather* 🌸 〕───⬣
 │ 🌍 *City:* ${data.name}, ${data.sys.country}
 │ 🌡️ *Temp:* ${data.main.temp}°C
 │ 🌡️ *Feels Like:* ${data.main.feels_like}°C
@@ -53,26 +53,47 @@ async (conn, mek, m, { from, q, reply }) => {
 │ 💨 *Wind Speed:* ${data.wind.speed} m/s
 │ 🔽 *Pressure:* ${data.main.pressure} hPa
 ╰──────────────────────⬣
-> *✨ Tsala Yame | Pᴏᴡᴇʀᴇᴅ ʙʏ Mᴜʟᴀx Pʀɪᴍᴇ*`;
+> *✨ Tsala Yame | PᴏᴡᴇRᴇᴅ ʙʏ Mᴜʟᴀx Pʀɪᴍᴇ*`;
 
         let styledWeather = tiny(weatherLayout);
         const photoPath = getRandomPhoto();
+        const imageSource = (photoPath && fs.existsSync(photoPath)) ? { url: photoPath } : undefined;
 
-        if (photoPath && fs.existsSync(photoPath)) {
-            const imageBuffer = fs.readFileSync(photoPath);
-            await conn.sendMessage(from, {
-                image: imageBuffer,
-                caption: styledWeather
-            }, { quoted: mek });
-        } else {
-            await conn.sendMessage(from, { text: styledWeather }, { quoted: mek });
-        }
+        const buttons = [
+            B.cmdBtn('📁 Menu', 'menu'),
+            B.cmdBtn('🔄 Refresh Weather', `weather ${q}`),
+            B.cmdBtn('ℹ️ System', 'systeminfo')
+        ];
+
+        // Custom contextInfo with pre-filled subtext when messaging
+        const contextInfo = {
+            forwardingScore: 9999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: '120363420003990090@newsletter',
+                newsletterName: '⏤͟͟͞͞Tsala Yame ͟͞͞⏤'
+            },
+            externalAdReply: {
+                title: 'Tsala Yame Weather Service',
+                body: 'Good day sir my name is ',
+                mediaType: 1,
+                renderLargerThumbnail: false
+            }
+        };
+
+        await B.sendButtons(conn, from, {
+            text: styledWeather,
+            image: imageSource,
+            footer: 'Tsala Yame | Powered by Mulax Prime',
+            buttons: buttons,
+            contextInfo: contextInfo
+        }, { quoted: mek, mentions: [sender] });
 
     } catch (e) {
-        console.log(e);
+        console.error("Weather error:", e);
         if (e.response && e.response.status === 404) {
             return reply(tiny("🚫 City not found. Please check the spelling and try again."));
         }
-        return reply(tiny("⚠️ An error occurred while fetching the weather information. Please try again later."));
+        return reply(tiny("⚠️ An error occurred while fetching weather information."));
     }
 });
