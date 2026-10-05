@@ -10,6 +10,7 @@ const path = require("path");
 const AdmZip = require("adm-zip");
 const config = require('../config');
 const { tiny } = require("../lib/fancy_font/fancy");
+const B = require('../lib/buttons');
 
 // Function to get a random photo safely (supports jpg, jpeg, png, webp)
 function getRandomPhoto() {
@@ -82,7 +83,7 @@ cmd({
         }
 
         let successText = 
-            `╭───〔 🌸 *T𝚜𝚊𝚕𝚊 U𝚙𝚍𝚊𝚝𝚎* 🌸 〕───⬣
+`╭───〔 🌸 *T𝚜𝚊𝚕𝚊 U𝚙𝚍𝚊𝚝𝚎* 🌸 〕───⬣
 │ ✅ *Status:* Update complete!
 │ 🔄 *Action:* Restarting...
 ╰──────────────⬣
@@ -90,16 +91,20 @@ cmd({
 
         let styledSuccess = tiny(successText);
         const photoPath = getRandomPhoto();
+        const image = photoPath && fs.existsSync(photoPath) ? { url: photoPath } : undefined;
 
-        if (photoPath && fs.existsSync(photoPath)) {
-            const imageBuffer = fs.readFileSync(photoPath);
-            await client.sendMessage(from, {
-                image: imageBuffer,
-                caption: styledSuccess
-            }, { quoted: message });
-        } else {
-            await reply(styledSuccess);
-        }
+        const buttons = [
+            B.cmdBtn('📁 Menu', 'menu'),
+            B.cmdBtn('ℹ️ Info', 'systeminfo'),
+            B.cmdBtn('🔄 Restart', 'restart')
+        ];
+
+        await B.sendButtons(client, from, {
+            text: styledSuccess,
+            image: image,
+            footer: 'Tsala Yame Updater',
+            buttons: buttons
+        }, { quoted: message, mentions: [sender] });
 
         setTimeout(() => process.exit(0), 2000);
 
