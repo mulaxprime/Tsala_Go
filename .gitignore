@@ -1,0 +1,10 @@
+node_modules/
+
+.env
+config.env
+auth_info_baileys/
+agents/
+.codex/
+.claude/
+.aws/
+backups/
